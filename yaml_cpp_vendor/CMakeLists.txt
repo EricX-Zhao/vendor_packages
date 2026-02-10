@@ -12,7 +12,7 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
   yaml_cpp_vendor
-  URL https://github.com/jbeder/yaml-cpp.git
+  URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.9.0.tar.gz
 )
 
 set(CMAKE_BUILD_TYPE Release)
