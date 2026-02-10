@@ -16,7 +16,7 @@ FetchContent_Declare(
 )
 
 set(CMAKE_BUILD_TYPE Release)
-set(BUILD_TESTING OFF)
+set(YAML_BUILD_SHARED_LIBS ON CACHE BOOL "YAML_BUILD_SHARED_LIBS" FORCE)
+set(YAML_CPP_INSTALL ON CACHE BOOL "YAML_CPP_INSTALL" FORCE)
 
 FetchContent_MakeAvailable(yaml_cpp_vendor)
-

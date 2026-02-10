@@ -7,13 +7,11 @@
   <maintainer email="ericzhao0325@163.com">ericx</maintainer>
   <license>TODO: License declaration</license>
 
-  <depend>eigen3_vendor</depend>
   <depend>liblz4_vendor</depend>
   <depend>libyaml_vendor</depend>
   <depend>tinyxml2_vendor</depend>
   <depend>yaml_cpp_vendor</depend>
   <depend>zstd_vendor</depend>
-  <depend>ceres_vendor</depend>
 
   <export>
     <build_type>cmake</build_type>

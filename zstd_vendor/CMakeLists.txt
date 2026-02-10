@@ -12,7 +12,6 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
   zstd_vendor
-  URL https://github.com/jbeder/yaml-cpp.git
   GIT_REPOSITORY  https://github.com/facebook/zstd.git
   GIT_TAG v1.5.5
 )
