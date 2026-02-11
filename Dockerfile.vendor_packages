@@ -101,8 +101,8 @@ WORKDIR /tmp
 
 COPY --from=ssl_builder ${TARGET_SYSROOT} ${TARGET_SYSROOT}
 
-COPY vendor_packages/Python-3.10.12.tar.xz .
-# RUN wget https://www.python.org/ftp/python/3.10.12/Python-3.10.12.tar.xz && \
+# COPY vendor_packages/Python-3.10.12.tar.xz .
+RUN wget https://www.python.org/ftp/python/3.10.12/Python-3.10.12.tar.xz && \
 RUN tar -xf Python-3.10.12.tar.xz && \
     rm Python-3.10.12.tar.xz
 
