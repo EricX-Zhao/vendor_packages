@@ -12,12 +12,12 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
   zstd_vendor
-  GIT_REPOSITORY  https://github.com/facebook/zstd.git
-  GIT_TAG v1.5.5
+  URL https://github.com/facebook/zstd/archive/refs/tags/v1.5.7.tar.gz
+  SOURCE_SUBDIR  build/cmake
 )
 
 set(CMAKE_BUILD_TYPE Release)
-set(ZSTD_BUILD_STATIC OFF CACHE BOOL "ZSTD_BUILD_STATIC" FORCE)
+set(ZSTD_BUILD_STATIC ON CACHE BOOL "ZSTD_BUILD_STATIC" FORCE)
 set(ZSTD_BUILD_SHARED ON CACHE BOOL "ZSTD_BUILD_SHARED" FORCE)
 set(ZSTD_BUILD_PROGRAMS ON CACHE BOOL "ZSTD_BUILD_PROGRAMS" FORCE)
 
