@@ -1,0 +1,145 @@
+ARG BASE_IMAGE
+
+FROM ${BASE_IMAGE} as vendor_packages_src
+
+RUN mkdir -p workspace/src
+COPY vendor_packages workspace/src/
+
+# RUN mkdir -p workspace/src \
+#     && cd workspace/src \
+#     && git clone https://github.com/EricX-Zhao/vendor_packages.git
+
+FROM vendor_packages_src as system_packages
+
+RUN cd workspace \
+    && colcon build \
+    --install-base ${TARGET_SYSROOT} \
+    --merge-install \
+    --packages-up-to system_vendor_packages \
+    --cmake-force-configure \
+    --cmake-args \
+    --no-warn-unused-cli \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTING=OFF \
+    -DCMAKE_TOOLCHAIN_FILE=${CC_TOOLCHAIN_FILE}
+
+
+FROM vendor_packages_src as ceres_vendor
+
+RUN cd workspace \
+    && colcon build \
+    --install-base ${TARGET_SYSROOT} \
+    --merge-install \
+    --packages-up-to ceres_vendor \
+    --cmake-force-configure \
+    --cmake-args \
+    --no-warn-unused-cli \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_TOOLCHAIN_FILE=${CC_TOOLCHAIN_FILE}
+
+
+FROM vendor_packages_src as opencv_vendor
+
+RUN cd workspace \
+    && colcon build \
+    --install-base ${TARGET_SYSROOT} \
+    --merge-install \
+    --packages-up-to opencv_vendor \
+    --cmake-force-configure \
+    --cmake-args \
+    --no-warn-unused-cli \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_TOOLCHAIN_FILE=${CC_TOOLCHAIN_FILE}
+
+FROM ${BASE_IMAGE} AS boost
+
+WORKDIR /tmp
+
+RUN wget https://archives.boost.io/release/1.83.0/source/boost_1_83_0.tar.gz
+
+RUN tar -zxf boost_1_83_0.tar.gz \
+    && cd boost_1_83_0 \
+    && ./bootstrap.sh --prefix=${TARGET_SYSROOT} --without-libraries=python \
+    && sed -i "/using gcc/c using gcc : arm64 : aarch64-none-linux-gnu-gcc ;" project-config.jam \
+    && ./b2 cxxflags="-fPIC" cflags="-fPIC" link=static install
+
+FROM vendor_packages_src as pcl_vendor
+
+COPY --from=boost ${TARGET_SYSROOT} ${TARGET_SYSROOT}
+
+RUN cd workspace \
+    && colcon build \
+    --install-base ${TARGET_SYSROOT} \
+    --merge-install \
+    --packages-up-to pcl_vendor \
+    --cmake-force-configure \
+    --cmake-args \
+    --no-warn-unused-cli \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_TOOLCHAIN_FILE=${CC_TOOLCHAIN_FILE}
+
+
+# OpenSSL
+FROM ${BASE_IMAGE} AS ssl_builder
+WORKDIR /tmp
+RUN git clone --depth=1 https://github.com/janbar/openssl-cmake.git \
+    && cd openssl-cmake \
+    && mkdir build \
+    && cd build \
+    && cmake .. \
+        -DCMAKE_TOOLCHAIN_FILE=${CC_TOOLCHAIN_FILE} \
+        -DCMAKE_INSTALL_PREFIX=${TARGET_SYSROOT} \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    && make -j$(($(nproc) / 2)) && make install \
+    && rm -rf /tmp
+
+# Python 3.12
+FROM ${BASE_IMAGE} AS python_builder
+
+WORKDIR /tmp
+
+COPY --from=ssl_builder ${TARGET_SYSROOT} ${TARGET_SYSROOT}
+
+COPY vendor_packages/Python-3.10.12.tar.xz .
+# RUN wget https://www.python.org/ftp/python/3.10.12/Python-3.10.12.tar.xz && \
+RUN tar -xf Python-3.10.12.tar.xz && \
+    rm Python-3.10.12.tar.xz
+
+# 配置和编译 Python
+WORKDIR /tmp/Python-3.10.12
+ENV CC=aarch64-none-linux-gnu-gcc \
+    CXX=aarch64-none-linux-gnu-g++ \
+    AR=aarch64-none-linux-gnu-ar \
+    RANLIB=aarch64-none-linux-gnu-ranlib \
+    HOSTARCH=aarch64-none-linux-gnu \
+    BUILDARCH=x86_64-linux-gnu
+
+RUN CFLAGS="-fPIC" LDFLAGS="-fPIC" ./configure \
+    --host=aarch64-none-linux-gnu \
+    --build=x86_64-linux-gnu \
+    --prefix=${TARGET_SYSROOT} \
+    --with-build-python=python3.12 \
+    --disable-ipv6 \
+    --enable-optimizations \
+    --with-openssl=${TARGET_SYSROOT} \
+    ac_cv_file__dev_ptmx=yes \
+    ac_cv_file__dev_ptc=yes \
+    && make -j$(($(nproc) / 2)) && make install
+
+# https://github.com/benfogle/crossenv
+# cross compile python packages 
+WORKDIR /tmp
+RUN python3 -m pip install crossenv \
+    && python3 -m crossenv ${TARGET_SYSROOT}/bin/python3 venv \
+    && . venv/bin/activate \
+    && pip -v install numpy==1.21.5 lark==1.1.1 packaging --prefix=${TARGET_SYSROOT}
+
+
+FROM ${BASE_IMAGE} as final
+
+COPY --from=system_packages ${TARGET_SYSROOT} ${TARGET_SYSROOT}
+COPY --from=ceres_vendor ${TARGET_SYSROOT} ${TARGET_SYSROOT}
+COPY --from=opencv_vendor ${TARGET_SYSROOT} ${TARGET_SYSROOT}
+COPY --from=pcl_vendor ${TARGET_SYSROOT} ${TARGET_SYSROOT}
+COPY --from=python_builder ${TARGET_SYSROOT} ${TARGET_SYSROOT}

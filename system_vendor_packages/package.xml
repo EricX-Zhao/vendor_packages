@@ -12,6 +12,13 @@
   <depend>tinyxml2_vendor</depend>
   <depend>yaml_cpp_vendor</depend>
   <depend>zstd_vendor</depend>
+  <depend>geographiclib_vendor</depend>
+  <depend>orocos_kdl_vendor</depend>
+  <depend>uncrustify_vendor</depend>
+  <depend>mimick_vendor</depend>
+  <depend>pybind11_vendor</depend>
+  <depend>spdlog_vendor</depend>
+  <depend>console_bridge</depend>
 
   <export>
     <build_type>cmake</build_type>
