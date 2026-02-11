@@ -6,31 +6,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
-# include(ExternalProject)
-
-# ExternalProject_Add(suitesparse_external
-#   URL https://github.com/DrTimothyAldenDavis/SuiteSparse/archive/refs/tags/v7.12.1.tar.gz
-  
-#   # 强制传递所有交叉编译参数
-#   CMAKE_ARGS
-#     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-#     -DCMAKE_INSTALL_PREFIX=${SS_INSTALL_DIR}
-#     -DBUILD_SHARED_LIBS=ON
-#     -DBUILD_STATIC_LIBS=OFF
-#     -DSUITESPARSE_DEMOS=OFF
-#     -DBUILD_TESTING=OFF
-#     -DBLAS_LIBRARIES=${CMAKE_INSTALL_PREFIX}/lib/libopenblas.so
-#     -DSUITESPARSE_ENABLE_PROJECTS=suitesparse_config;mongoose;amd;btf;camd;ccolamd;colamd;cholmod;cxsparse;ldl;klu;umfpack;paru;rbio;spqr
-#     # 注入 rpath-link 解决链接期间找不到 libopenblas.so.0 的问题
-#     -DCMAKE_EXE_LINKER_FLAGS=-Wl,-rpath-link,${CMAKE_INSTALL_PREFIX}/lib
-
-#   # BUILD_COMMAND make -j4 # RK3588 建议限流
-#   INSTALL_COMMAND make install
-# )
-
 include(FetchContent)
 FetchContent_Declare(
   suitesparse_vendor
@@ -51,14 +26,6 @@ if (NOT suitesparse_vendor_POPULATED)
 
   add_subdirectory(${suitesparse_vendor_SOURCE_DIR} ${suitesparse_vendor_BINARY_DIR})
 endif()
-
-
-# FetchContent_MakeAvailable(suitesparse_vendor)
-
-# 3. 欺骗 colcon：创建一个伪装的 install 目标
-# 因为 ExternalProject 在构建时运行，colcon 在配置时看不到 target
-# install(DIRECTORY DESTINATION include) 
-
 
 # cmake .. \
 #   -DCMAKE_TOOLCHAIN_FILE=/opt/cmake/rk3588.toolchain.cmake \
