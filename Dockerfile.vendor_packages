@@ -2,12 +2,12 @@ ARG BASE_IMAGE
 
 FROM ${BASE_IMAGE} as vendor_packages_src
 
-RUN mkdir -p workspace/src
-COPY vendor_packages workspace/src/
+# RUN mkdir -p workspace/src
+# COPY vendor_packages workspace/src/
 
-# RUN mkdir -p workspace/src \
-#     && cd workspace/src \
-#     && git clone https://github.com/EricX-Zhao/vendor_packages.git
+RUN mkdir -p workspace/src \
+    && cd workspace/src \
+    && git clone https://github.com/EricX-Zhao/vendor_packages.git
 
 FROM vendor_packages_src as system_packages
 
